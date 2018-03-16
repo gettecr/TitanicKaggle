@@ -1,4 +1,4 @@
-Titanic
+Titanic Survival Data Analysis
 ==============================
 
 This is my initial analysis of the Titanic survival dataset from the Kaggle competition. The dataset contains a train.csv and test.csv from the Kaggle competition website. The analysis involves data cleaning and machine learning analysis with logistic regression, decision tree, random forest and a couple of other machine learning tools to make predictions. Predictions are saved in 'processed' data as 'submissions.csv'
