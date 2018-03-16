@@ -53,41 +53,46 @@ Project Organization
 
 #####
 
-VARIABLES DESCRIPTION:
-
-Survival        Survival
-                (0 = No; 1 = Yes)
-Pclass          Passenger Class
-                (1 = 1st; 2 = 2nd; 3 = 3rd)
-Name            Name
-Sex             Sex
-Age             Age
-Sibsp           Number of Siblings/Spouses Aboard
-Parch           Number of Parents/Children Aboard
-Ticket          Ticket Number
-Fare            Passenger Fare
-Cabin           Cabin
-Embarked        Port of Embarkation
-                (C = Cherbourg; Q = Queenstown; S = Southampton)
+VARIABLES | DESCRIPTION
+----------|------------
+Survival | (0 = No; 1 = Yes)
+Pclass   |  Passenger Class (1 = 1st; 2 = 2nd; 3 = 3rd)
+Name     | Name
+Sex      |  Male or Female
+Age       |  Age in years
+Sibsp     |  Number of Siblings/Spouses Aboard
+Parch     |  Number of Parents/Children Aboard
+Ticket    |  Ticket Number
+Fare      |  Passenger Fare
+Cabin     |  Cabin
+Embarked  |  Port of Embarkation (C = Cherbourg; Q = Queenstown; S = Southampton)
 
 #####
 
 SPECIAL NOTES:
 
-Pclass is a proxy for socio-economic status (SES)
- 1st ~ Upper; 2nd ~ Middle; 3rd ~ Lower
+Pclass is a proxy for socio-economic status (SES) (1st ~ Upper; 2nd ~ Middle; 3rd ~ Lower)
 
+ 
 Age is in Years; Fractional if Age less than One (1)
- If the Age is Estimated, it is in the form xx.5
-
+   If the Age is Estimated, it is in the form xx.5
+   
+   
 With respect to the family relation variables (i.e. sibsp and parch)
 some relations were ignored.  The following are the definitions used
-for sibsp and parch.
+for sibsp and parch:
 
-Sibling:  Brother, Sister, Stepbrother, or Stepsister of Passenger Aboard Titanic
-Spouse:   Husband or Wife of Passenger Aboard Titanic (Mistresses and Fiances Ignored)
-Parent:   Mother or Father of Passenger Aboard Titanic
-Child:    Son, Daughter, Stepson, or Stepdaughter of Passenger Aboard Titanic
+
+Sibling: Brother, Sister, Stepbrother, or Stepsister of Passenger Aboard Titanic
+
+
+Spouse:  Husband or Wife of Passenger Aboard Titanic (Mistresses and Fiances Ignored)
+
+
+Parent:  Mother or Father of Passenger Aboard Titanic
+
+
+Child:   Son, Daughter, Stepson, or Stepdaughter of Passenger Aboard Titanic
 
 Other family relatives excluded from this study include cousins,
 nephews/nieces, aunts/uncles, and in-laws.  Some children travelled
@@ -99,5 +104,7 @@ Acknowledgments
 ------------
 
 * Cookiecutter-data-science template was used for file orgainization (<a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>)
+
+* Competition Website: <a target="_blank" href="http://www.kaggle.com/c/titanic-gettingStarted">Titanic: Machine Learning from Disaster</a>
 
 
