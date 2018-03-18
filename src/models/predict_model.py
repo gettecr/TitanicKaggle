@@ -9,7 +9,7 @@ testfile = '../../data/processed/test_1.0.csv'
 
 df_test = pd.read_csv(testfile)
 
-#Random forest is the most predictive for this data set
+#Random forest is the most accurate for this data set
 
 random_forest = train_model.make_model(trainfile)
 
