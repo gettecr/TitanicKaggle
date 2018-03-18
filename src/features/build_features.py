@@ -93,28 +93,32 @@ def main():
 
     df_train = pd.read_csv(trainfile)
     df_test = pd.read_csv(testfile)
-
+    
+    #Extract title feature from name
     df_train = get_title(df_train)
     df_test = get_title(df_test)
-
+    
+    #Imputate new ages to fill in missing data
     df_train = imputate_age(df_train)
     df_test = imputate_age(df_test)
 
+    #Assign age bins for different age groups
     cutPoints =[0,5,12,18,35,60,100]
     labels = ["Infant","Child","Teenager","Young Adult","Adult","Senior"]
-
+ 
     df_train = cut_age(df_train,'Age_mod_rand',cutPoints,labels,"rand")
     df_train = cut_age(df_train,'Age_mod_mean',cutPoints,labels,"mean")
 
     df_test = cut_age(df_test,'Age_mod_rand',cutPoints,labels,"rand")
     df_test = cut_age(df_test,'Age_mod_mean',cutPoints,labels,"mean")
-
+    
+    #Fill missing embarkation data with most common port
     most_embarked = df_train.Embarked.dropna().mode()[0]
 
     df_train['Embarked'] = df_train['Embarked'].fillna(most_embarked)
     df_test['Embarked'] = df_test['Embarked'].fillna(most_embarked)
 
-
+    #Fill other variables and dummy variables to be used in modeling
     df_train = model_vars(df_train)
     df_test = model_vars(df_test)
 
@@ -151,7 +155,6 @@ def main():
                         'inAge_mean_Young Adult',
                         'inAge_mean_Adult',
                         'inAge_mean_Senior','from_C','Eins']
-
     data_out_train = df_train[cols_to_keep_train]
     data_out_test = df_test[cols_to_keep_test]
 
@@ -167,7 +170,6 @@ if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
 
-    # not used in this stub but often useful for finding various files
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 
     # find .env automagically by walking up directories until it's found, then
