@@ -9,11 +9,11 @@ testfile = '../../data/processed/test_1.0.csv'
 
 df_test = pd.read_csv(testfile)
 
-#Random forest is the most predictive for this data set
+#Random forest is the most predictive for this data set (See the regression modeling jupyter notebook)
 
 random_forest = train_model.make_model(trainfile)
 
-
+#Predict using most predictive columns based on logistic regression
 X_test  = df_test[['class_1','class_2','Female',"FamilySize",
                           'inAge_rand_Infant','inAge_rand_Child', 'inAge_rand_Young Adult','from_C'
                             ]].copy()
