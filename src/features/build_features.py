@@ -7,6 +7,83 @@ from dotenv import find_dotenv, load_dotenv
 import numpy as np
 import pandas as pd
 
+ #Each name has a title which is indiciative of their age. (Age is highly predictive of survival) 
+#Extract titles from individual names
+    
+def get_title(df):
+    df['Title']=df['Name'].apply(lambda x: x.split(',')[1].split('.')[0].strip())
+    return df
+
+#Make arrays of all the known ages from each "title" group
+def age_array(Title, df):
+    ages = df.loc[(df['Title']==Title),'Age'].tolist()
+    ages = [x for x in ages if str(x) != 'nan']
+    return ages
+
+#Drawing a random age from the distribution of ages for every person according to Title
+def draw_rand(Title, df):
+    return df.loc[(df['Title']==Title),'Age_rand'].apply(lambda x: np.random.choice( np.array(age_array(Title,df))))
+
+def imputate_age(df):
+    #Fill missing age data in two ways: Random choices from a distribution according to title (Simple random imputation),
+    #and according to means grouped by title
+    
+    #Replace the rarer titles with a common "other" title
+    df['Title'] = df['Title'].replace(['Lady', 'Countess','Capt', 'Col',
+                                                 'Don', 'Dr', 'Major', 'Rev', 'Sir', 'Jonkheer', 'Dona'], 'Other')
+    df['Title'] = df['Title'].replace('Mlle', 'Miss')
+    df['Title'] = df['Title'].replace('Ms', 'Miss')
+    df['Title'] = df['Title'].replace('Mme', 'Mrs')
+    
+    #Calculate means of ages grouped by title
+    means = df.groupby('Title', as_index=False).agg(
+                      {'Age':['mean','std']})
+    means.columns=['Title','Age_mean',"Age_std"]
+    means=means.set_index('Title')
+    
+    
+    #Make new column drawing a random age from the distribution of ages for every person according to Title
+    
+    df['Age_rand']=df['Age']
+    
+    for Title in df['Title'].unique():
+        df.loc[(df['Title']==Title),'Age_rand']=draw_rand(Title, df)
+    
+    #Make a column which chooses from "Age" if known, or "Age_rand" if unknown
+    df['Age_mod_rand']=np.where(df['Age'].isnull(),df['Age_rand'],df['Age'])
+    
+    #Choose from means instead of random
+    df['Age_mod_mean']=df['Age']
+    for title in df["Title"].unique():
+        df.loc[(df["Title"]==title)&(df['Age_mod_mean'].isnull()),['Age_mod_mean']]= means.loc[title,'Age_mean']
+    return df
+
+def cut_age(df, colName, cutPoints, labels,suffix):
+    df['Age_bin_'+str(suffix)]=pd.cut(df[colName],cutPoints,labels=labels)
+    return df
+
+def model_vars(df):
+    df["Female"]=np.where(df['Sex']=='female',1,0)
+    
+    #assign dummies to categories
+    pclass = pd.get_dummies(df['Pclass'],prefix='class')
+    df = df.join(pclass,how='outer')
+    df.head()
+    
+    embarked = pd.get_dummies(df['Embarked'], prefix = 'from')
+    df = df.join(embarked,how='outer')
+    
+    ages1 = pd.get_dummies(df['Age_bin_rand'],prefix='inAge_rand')
+    ages2 = pd.get_dummies(df['Age_bin_mean'],prefix='inAge_mean')
+    df = df.join(ages1,how='outer')
+    df = df.join(ages2,how='outer')
+    
+    #set new family size variable
+    df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
+    
+    #include constant term for stats models regression
+    df['Eins']=1.0
+    return df
 
 
 def main():
@@ -17,108 +94,63 @@ def main():
     df_train = pd.read_csv(trainfile)
     df_test = pd.read_csv(testfile)
 
-    combine = [df_train, df_test]
+    df_train = get_title(df_train)
+    df_test = get_title(df_test)
 
-    #Each name has a title which is indiciative of their age. (Age is highly predictive of survival) 
-    #Extract titles from individual names
-    
-    for data in combine:
-        data['Title']=data['Name'].apply(lambda x: x.split(',')[1].split('.')[0].strip())
+    df_train = imputate_age(df_train)
+    df_test = imputate_age(df_test)
 
-   
-    for data in combine:
-        #Set Female dummy variable (Sex is also highly predictive)
-        data["Female"]=np.where(data['Sex']=='female',1,0)
+    cutPoints =[0,5,12,18,35,60,100]
+    labels = ["Infant","Child","Teenager","Young Adult","Adult","Senior"]
 
+    df_train = cut_age(df_train,'Age_mod_rand',cutPoints,labels,"rand")
+    df_train = cut_age(df_train,'Age_mod_mean',cutPoints,labels,"mean")
 
-        #Fill missing age data according to mean by title (this is the most straightforward way to get ages. Splitting by title improves prediction over
-        #using the total population)
-    
-        #Replace the rarer titles with a common "other" title
-        data['Title'] = data['Title'].replace(['Lady', 'Countess','Capt', 'Col',
-                                               'Don', 'Dr', 'Major', 'Rev', 'Sir', 'Jonkheer', 'Dona'], 'Other')
-        
-        #Also replace different names for similar things with the more common name
-        data['Title'] = data['Title'].replace('Mlle', 'Miss')
-        data['Title'] = data['Title'].replace('Ms', 'Miss')
-        data['Title'] = data['Title'].replace('Mme', 'Mrs')
-    
-        #Calculate means of ages grouped by title
-        means = data.groupby('Title', as_index=False).agg(
-                      {'Age':['mean','std']})
-        means.columns=['Title','Age_mean',"Age_std"]
-        means=means.set_index('Title')
-    
-        #Choose from means if the value from "Age" is null
-        data['Age_mod_mean']=data['Age']
-        for title in data["Title"].unique():
-            data.loc[(data["Title"]==title)&(data['Age_mod_mean'].isnull()),['Age_mod_mean']]= means.loc[title,'Age_mean']
+    df_test = cut_age(df_test,'Age_mod_rand',cutPoints,labels,"rand")
+    df_test = cut_age(df_test,'Age_mod_mean',cutPoints,labels,"mean")
 
-    #bin ages into 5 groups for predictions
-    for data in combine: 
-        data['Age_bin_mean']=data['Age_mod_mean']
-
-        binfrom = 'Age_mod_mean'
-        bintype = 'Age_bin_mean'
-        data.loc[ data[binfrom] <= 16, bintype] = 1
-        data.loc[(data[binfrom] > 16) & (data[binfrom] <= 25), bintype] = 2
-        data.loc[(data[binfrom] > 25) & (data[binfrom] <= 40), bintype] = 3
-        data.loc[(data[binfrom] > 40) & (data[binfrom] <= 60), bintype] = 4
-        data.loc[ data[binfrom] > 60, bintype]=5
-
-    #Find most common place passengers embarked
     most_embarked = df_train.Embarked.dropna().mode()[0]
 
-    #Fill in missing data for "Embarked" with most common
-    for data in combine:
-        data['Embarked'] = data['Embarked'].fillna(most_embarked)
-        
-    #Make dummy variables for the embarked locations
-    embarked1 = pd.get_dummies(df_train['Embarked'], prefix = 'from')
-    df_train = df_train.join(embarked1,how='outer')
+    df_train['Embarked'] = df_train['Embarked'].fillna(most_embarked)
+    df_test['Embarked'] = df_test['Embarked'].fillna(most_embarked)
 
-    embarked2 = pd.get_dummies(df_test['Embarked'], prefix = 'from')
-    df_test = df_test.join(embarked2,how='outer')
 
-    #Make dummy variables for each age bin
-    ages = pd.get_dummies(df_train['Age_bin_mean'],prefix='inAge_mean')
-    df_train = df_train.join(ages)
-
-    ages = pd.get_dummies(df_test['Age_bin_mean'],prefix='inAge_mean')
-    df_test = df_test.join(ages)
-
-    #Rename columns
-    df_train.rename(index=str, columns={'inAge_mean_1.0':'Agem_0-16', 'inAge_mean_2.0':'Agem_16-25', 'inAge_mean_3.0':'Agem_25-40',
-                                        'inAge_mean_4.0':'Agem_40-60', 'inAge_mean_5.0':'Agem_60+'}, inplace=True)
-
-    df_test.rename(index=str, columns={'inAge_mean_1.0':'Agem_0-16', 'inAge_mean_2.0':'Agem_16-25', 'inAge_mean_3.0':'Agem_25-40',
-                                       'inAge_mean_4.0':'Agem_40-60', 'inAge_mean_5.0':'Agem_60+'}, inplace=True)
-    
-    #Calculate family size from sibilng/spouse and Parent/child data
-    df_train['FamilySize'] = df_train['SibSp'] + df_train['Parch'] + 1
-    df_test['FamilySize'] = df_test['SibSp'] + df_test['Parch'] + 1
-
+    df_train = model_vars(df_train)
+    df_test = model_vars(df_test)
 
     cols_to_keep_train = ['PassengerId',
-                          'Survived',
-                          'Pclass',
-                          'Name',
-                          'Female',"FamilySize",
-                          'Agem_0-16',
-                          'Agem_16-25',
-                          'Agem_25-40',
-                          'Agem_40-60',
-                          'Agem_60+','from_C']
+                         'Survived',
+                         'class_1','class_2',
+                         'Name',
+                         'Female',"FamilySize",'inAge_rand_Infant',
+                         'inAge_rand_Child',
+                         'inAge_rand_Teenager',
+                         'inAge_rand_Young Adult',
+                         'inAge_rand_Adult',
+                         'inAge_rand_Senior',
+                         'inAge_mean_Infant',
+                         'inAge_mean_Child',
+                         'inAge_mean_Teenager',
+                         'inAge_mean_Young Adult',
+                         'inAge_mean_Adult',
+                         'inAge_mean_Senior','from_C','Eins', 'Age_mod_rand','Age_mod_mean','Age',
+                         'Age_bin_rand','Age_bin_mean']
 
     cols_to_keep_test = ['PassengerId',
-                         'Pclass',
-                         'Name',
-                         'Female',"FamilySize",
-                         'Agem_0-16',
-                         'Agem_16-25',
-                         'Agem_25-40',
-                         'Agem_40-60',
-                         'Agem_60+','from_C']
+                        'class_1','class_2',
+                        'Name',
+                        'Female',"FamilySize",'inAge_rand_Infant',
+                        'inAge_rand_Child',
+                        'inAge_rand_Teenager',
+                        'inAge_rand_Young Adult',
+                        'inAge_rand_Adult',
+                        'inAge_rand_Senior',
+                        'inAge_mean_Infant',
+                        'inAge_mean_Child',
+                        'inAge_mean_Teenager',
+                        'inAge_mean_Young Adult',
+                        'inAge_mean_Adult',
+                        'inAge_mean_Senior','from_C','Eins']
 
     data_out_train = df_train[cols_to_keep_train]
     data_out_test = df_test[cols_to_keep_test]
