@@ -4,8 +4,8 @@ from sklearn.ensemble import RandomForestClassifier
 import train_model
 
 
-trainfile = trainfile = '../../data/processed/train_1.0.csv'
-testfile = '../../data/processed/test_1.0.csv'
+trainfile = trainfile = 'data/processed/train_1.0.csv'
+testfile = 'data/processed/test_1.0.csv'
 
 df_test = pd.read_csv(testfile)
 
@@ -25,4 +25,4 @@ submission = pd.DataFrame({
         "PassengerId": df_test["PassengerId"],
         "Survived": Y_pred
     })
-submission.to_csv('../../data/processed/submission.csv', index=False)
+submission.to_csv('data/processed/submission.csv', index=False)
