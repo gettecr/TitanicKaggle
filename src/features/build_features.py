@@ -159,8 +159,8 @@ def main():
     data_out_test = df_test[cols_to_keep_test]
 
     #Output to "processed" file
-    data_out_train.to_csv('../../data/processed/train_1.0.csv', encoding='utf-8')
-    data_out_test.to_csv('../../data/processed/test_1.0.csv', encoding='utf-8')
+    data_out_train.to_csv('data/processed/train_1.0.csv', encoding='utf-8')
+    data_out_test.to_csv('data/processed/test_1.0.csv', encoding='utf-8')
 
     logger = logging.getLogger(__name__)
     logger.info('making final data set from raw data')
