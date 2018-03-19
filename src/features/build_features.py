@@ -88,8 +88,8 @@ def model_vars(df):
 
 def main():
     #read raw data files
-    trainfile = '../../data/raw/train.csv'
-    testfile = '../../data/raw/test.csv'
+    trainfile = 'data/raw/train.csv'
+    testfile = 'data/raw/test.csv'
 
     df_train = pd.read_csv(trainfile)
     df_test = pd.read_csv(testfile)
